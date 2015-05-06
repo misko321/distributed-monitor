@@ -1,6 +1,6 @@
 INCDIR=include
 CC=g++
-CFLAGS=-I$(INCDIR)
+CFLAGS=-I$(INCDIR) -Wall --std=c++11 -O3
 
 OBJDIR=obj
 
@@ -11,10 +11,6 @@ DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
 
 _OBJ = distributed_mutex.o main.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
-
-# _SRC = distributed_mutex.o
-# SRC = $(patsubst %,$(SRCDIR)/%,$(_OBJ))
-
 
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
