@@ -1,0 +1,7 @@
+#!/bin/sh
+if [ -z "$1" ]
+  then
+  echo "Please, give 1 parameter with number of hosts the program should run on."
+  exit
+fi
+./bin/mpirun -np $1 -default-hostfile none distr_mon

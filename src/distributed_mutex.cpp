@@ -1,6 +1,7 @@
 #include "distributed_mutex.h"
 #include <iostream>
-using namespace std;
+using std::cout;
+using std::endl;
 
 DistributedMutex::DistributedMutex() {
   cout << "Creating new mutex" << endl;

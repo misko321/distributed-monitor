@@ -1,5 +1,5 @@
 INCDIR=include
-CC=g++
+CC=./bin/mpic++
 CFLAGS=-I$(INCDIR) -Wall --std=c++11 -O3
 
 OBJDIR=obj
@@ -18,6 +18,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(DEPS)
 
 distr_mon: $(OBJ)
 	$(CC) -o $@ $^ $(CFLAGS)
+
 
 .PHONY: clean
 
