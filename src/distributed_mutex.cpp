@@ -1,20 +1,32 @@
 #include "distributed_mutex.h"
+
+#include "process_monitor.h"
+#include "packet.h"
+
 #include <iostream>
-using std::cout;
-using std::endl;
+
 
 DistributedMutex::DistributedMutex() {
-  cout << "Creating new mutex" << endl;
+  std::cout << "Creating new mutex" << std::endl;
 }
 
 DistributedMutex::~DistributedMutex() {
-  cout << "Destroying mutex" << endl;
+  std::cout << "Destroying mutex" << std::endl;
 }
 
 void DistributedMutex::acquire() {
-  cout << "acquire" << endl;
+  std::cout << "acquire" << std::endl;
+  interestedInCriticalSection = true;
+  localClock = highestClock + 1;
+  Packet *packet = new Packet(localClock, Packet::Type::DM_REQUEST);
+  // repliesNeeded = commSize - 1;
+
+  ProcessMonitor::instance().broadcast(*packet);
+  //wysylamy zadania (REQUEST) do wszystkich procesow (oprocz siebie)
+
+  delete packet;
 }
 
 void DistributedMutex::release() {
-  cout << "release" << endl;
+  std::cout << "release" << std::endl;
 }

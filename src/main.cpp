@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
   distributedMutex.acquire();
   distributedMutex.release();
 
+  while(true);
   MPI_Finalize();
   return 0;
 }
