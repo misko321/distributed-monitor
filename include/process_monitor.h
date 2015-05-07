@@ -13,6 +13,7 @@ public:
   void broadcast(Packet &packet);
   void receive();
   void run();
+  void finish();
   static ProcessMonitor& instance();
 
 private:
@@ -20,6 +21,7 @@ private:
   std::thread monitorThread;
   int comm_size;
   int comm_rank;
+  volatile bool shouldFinish = false;
 };
 
 #endif // DM_INCLUDE_PROCESS_MONITOR_H_

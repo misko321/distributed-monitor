@@ -15,6 +15,8 @@ int main(int argc, char* argv[]) {
   DistributedMutex distributedMutex;
   distributedMutex.acquire();
   distributedMutex.release();
+  distributedMutex.acquire();
+  distributedMutex.release();
 
   while(true);
   MPI_Finalize();
