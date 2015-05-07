@@ -6,8 +6,6 @@
 #include <thread>
 #include <mpi.h>
 
-int globalvar = 1;
-
 ProcessMonitor::ProcessMonitor() {
   MPI_Comm_size(MPI_COMM_WORLD, &comm_size);
   MPI_Comm_rank(MPI_COMM_WORLD, &comm_rank);

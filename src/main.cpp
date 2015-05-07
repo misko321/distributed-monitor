@@ -12,7 +12,7 @@ int main(int argc, char* argv[]) {
 
   cout << "size: " << size << ", rank: " << rank << endl;
 
-  DistributedMutex distributedMutex;
+  DistributedMutex distributedMutex(1);
   distributedMutex.acquire();
   distributedMutex.release();
   distributedMutex.acquire();

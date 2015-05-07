@@ -3,17 +3,17 @@
 
 class DistributedMutex {
 public:
-  DistributedMutex();
+  DistributedMutex(int resourceId);
   ~DistributedMutex();
 
 
   void acquire();
   void release();
 
-  int getResourceId();
+  unsigned int getResourceId();
 
 private:
-  int resourceId;
+  unsigned int resourceId;
   long localClock = 0;
   long highestClock = 0;
   bool interestedInCriticalSection = false;
