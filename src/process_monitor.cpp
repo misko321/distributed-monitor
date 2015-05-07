@@ -18,12 +18,12 @@ ProcessMonitor::~ProcessMonitor() {
 
 ProcessMonitor* ProcessMonitor::pInstance;
 
+//Singleton Design Pattern
 ProcessMonitor& ProcessMonitor::instance() {
-  static std::mutex mutex;
-
+  static std::mutex guard_;
   if (!pInstance) {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (!pInstance) {
+    std::lock_guard<std::mutex> lock(guard_);
+      if (!pInstance) {
       pInstance = new ProcessMonitor();
       pInstance->run();
     }
@@ -42,6 +42,24 @@ void ProcessMonitor::run() {
 void ProcessMonitor::finish() {
   this->shouldFinish = true;
   monitorThread.join();
+  delete pInstance;
+}
+
+void ProcessMonitor::addMutex(DistributedMutex& mutex) {
+  //synchronization in case, the end-user uses multiple threads that add mutexes
+  std::lock_guard<std::mutex> lock(guard);
+
+  if (resToMutex.find(mutex.getResourceId()) != resToMutex.end()) {
+    std::pair<int, DistributedMutex&> pair(mutex.getResourceId(), mutex);
+    resToMutex.insert(pair);
+  }
+}
+
+void ProcessMonitor::removeMutex(DistributedMutex& mutex) {
+  //synchronization in case, the end-user uses multiple threads that add mutexes
+  std::lock_guard<std::mutex> lock(guard);
+
+  resToMutex.erase(mutex.getResourceId());
 }
 
 void ProcessMonitor::broadcast(Packet &packet) {

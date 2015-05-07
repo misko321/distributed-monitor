@@ -29,3 +29,7 @@ void DistributedMutex::acquire() {
 void DistributedMutex::release() {
   // std::cout << "release" << std::endl;
 }
+
+int DistributedMutex::getResourceId() {
+  return resourceId;
+}

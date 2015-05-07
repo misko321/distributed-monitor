@@ -10,6 +10,8 @@ public:
   void acquire();
   void release();
 
+  int getResourceId();
+
 private:
   int resourceId;
   long localClock = 0;

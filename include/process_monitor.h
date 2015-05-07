@@ -1,7 +1,11 @@
 #ifndef DM_INCLUDE_PROCESS_MONITOR_H_
 #define DM_INCLUDE_PROCESS_MONITOR_H_
 
+#include "distributed_mutex.h"
+
 #include <thread>
+#include <mutex>
+#include <unordered_map>
 
 class Packet;
 
@@ -14,6 +18,8 @@ public:
   void receive();
   void run();
   void finish();
+  void addMutex(DistributedMutex& mutex);
+  void removeMutex(DistributedMutex& mutex);
   static ProcessMonitor& instance();
 
 private:
@@ -22,6 +28,8 @@ private:
   int comm_size;
   int comm_rank;
   volatile bool shouldFinish = false;
+  std::unordered_map<int, DistributedMutex&> resToMutex;
+  std::mutex guard;
 };
 
 #endif // DM_INCLUDE_PROCESS_MONITOR_H_
