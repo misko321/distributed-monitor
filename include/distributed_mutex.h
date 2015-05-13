@@ -17,8 +17,8 @@ public:
   unsigned int getResourceId();
   // std::condition_variable& getWaitCondition();
   // void notify();
-  void onReply(int source, Packet& packet);
-  void onRequest(int source, Packet& packet);
+  void onReply(int sourceCommRank);
+  void onRequest(int sourceCommRank, long packetClock);
 
 private:
   unsigned int resourceId;
@@ -27,8 +27,9 @@ private:
   bool interestedInCriticalSection = false;
   int repliesNeeded;
   int* waitsForReply;
-
   std::condition_variable waitCondition;
+
+  int rank();
 };
 
 #endif // DM_INCLUDE_DISTRIBUTED_MUTEX_H_

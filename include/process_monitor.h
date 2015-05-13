@@ -31,7 +31,7 @@ private:
   int commSize;
   int commRank;
   volatile bool shouldFinish = false;
-  std::unordered_map<int, DistributedMutex&> resToMutex;
+  std::unordered_map<unsigned int, DistributedMutex&> resToMutex;
   std::mutex guard;
 };
 

@@ -55,8 +55,10 @@ void ProcessMonitor::addMutex(DistributedMutex& mutex) {
   //synchronization in case, the end-user uses multiple threads that add mutexes
   std::lock_guard<std::mutex> lock(guard);
 
-  if (resToMutex.find(mutex.getResourceId()) != resToMutex.end()) {
-    std::pair<int, DistributedMutex&> pair(mutex.getResourceId(), mutex);
+  // std::cout << "addMutex" << std::endl;
+  if (resToMutex.find(mutex.getResourceId()) == resToMutex.end()) {
+    // std::cout << "addMutex inside if" << std::endl;
+    std::pair<unsigned int, DistributedMutex&> pair(mutex.getResourceId(), mutex);
     resToMutex.insert(pair);
   }
 }
@@ -83,15 +85,31 @@ void ProcessMonitor::send(int destination, Packet &packet) {
 void ProcessMonitor::receive() {
   MPI_Status status;
   Packet packet;
-  std::cout << "beforeMPIRecv" << std::endl;
+  // std::cout << "beforeMPIRecv" << std::endl;
   MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-  std::cout << commRank << ": received, " << packet.getClock() << std::endl;
+  // std::cout << commRank << ": received packet from: " << status.MPI_SOURCE
+  //   << ", with clock: " << packet.getClock() << std::endl;
   //TODO
   //niekoniecznie notify
   //notify wtedy, jesli jest to REPLY -> osobna metoda onReply() w mutexie
   //jeśli REQUEST, to odpowiadamy REPLY bądź wstrzymujemy -> osobna metoda onRequest
   //jeśli ani to, ani to (czyli komunikat użytkownika) to przekazujemy jak?
   //resToMutex[packet.getResourceId()].notify();
+  // std::cout << "beforeIter: " << packet.getResourceId() << ", " << resToMutex.size() << std::endl;
+  std::unordered_map<unsigned int, DistributedMutex&>::iterator mutexIter = resToMutex.find(packet.getResourceId());
+  if (mutexIter == resToMutex.end())
+    std::cout << "not found" << std::endl;
+  // std::cout << "afterIter: " << mutexIter->first << "->" << std::endl;
+  switch(packet.getType()) {
+    case Packet::Type::DM_REPLY: {
+      mutexIter->second.onReply(status.MPI_SOURCE);
+      break;
+    }
+    case Packet::Type::DM_REQUEST: {
+      mutexIter->second.onRequest(status.MPI_SOURCE, packet.getClock());
+      break;
+    }
+  }
 
   // std::this_thread::sleep_for(std::chrono::milliseconds(100));
   // this->shouldRun = false;

@@ -29,25 +29,32 @@ DistributedMutex::~DistributedMutex() {
 //   return waitCondition;
 // }
 
-//TODO: parameterless?
-void DistributedMutex::onReply(int sourceCommRank, Packet& packet) {
+void DistributedMutex::onReply(int sourceCommRank) {
+  std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
   --repliesNeeded;
   if (repliesNeeded == 0)
     waitCondition.notify_one();
 }
 
-void DistributedMutex::onRequest(int sourceCommRank, Packet &packet) {
-  highestClock = MAX(highestClock, packet.getClock());
+void DistributedMutex::onRequest(int sourceCommRank, long packetClock) {
+  std::cout << rank() << ": onRequest from: " << sourceCommRank << std::endl;
+  highestClock = MAX(highestClock, packetClock);
   if (interestedInCriticalSection &&
-    ((packet.getClock() > localClock) ||
-    (packet.getClock() == localClock && sourceCommRank > ProcessMonitor::instance().getCommRank()))) {
+    ((packetClock > localClock) ||
+    (packetClock == localClock && sourceCommRank > ProcessMonitor::instance().getCommRank()))) {
       waitsForReply[sourceCommRank] = true;
+      std::cout << rank() << ": waiting with reply to: " << sourceCommRank << std::endl;
   }
   else {
     Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
     ProcessMonitor::instance().send(sourceCommRank, packet);
+    std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << std::endl;
   }
 
+}
+
+int DistributedMutex::rank() {
+  return ProcessMonitor::instance().getCommRank();
 }
 
 void DistributedMutex::acquire() {
@@ -76,6 +83,7 @@ void DistributedMutex::release() {
     if (waitsForReply[i]) {
       ProcessMonitor::instance().send(i, packet);
       waitsForReply[i] = false;
+      std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
     }
   }
 }
