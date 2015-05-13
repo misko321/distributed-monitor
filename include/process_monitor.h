@@ -14,6 +14,7 @@ public:
   ProcessMonitor();
   ~ProcessMonitor();
 
+  void send(int destination, Packet &packet);
   void broadcast(Packet &packet);
   void receive();
   void run();
@@ -21,12 +22,14 @@ public:
   void addMutex(DistributedMutex& mutex);
   void removeMutex(DistributedMutex& mutex);
   static ProcessMonitor& instance();
+  int getCommSize();
+  int getCommRank();
 
 private:
   static ProcessMonitor* pInstance; // TODO: volatile
   std::thread monitorThread;
-  int comm_size;
-  int comm_rank;
+  int commSize;
+  int commRank;
   volatile bool shouldFinish = false;
   std::unordered_map<int, DistributedMutex&> resToMutex;
   std::mutex guard;
