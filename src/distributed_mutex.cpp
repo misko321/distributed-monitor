@@ -68,7 +68,7 @@ void DistributedMutex::acquire() {
 }
 
 void DistributedMutex::release() {
-  std::cout << "release\n";
+  // std::cout << "release\n";
   interestedInCriticalSection = false;
   int size = ProcessMonitor::instance().getCommSize();
   Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
