@@ -12,6 +12,7 @@ ProcessMonitor::ProcessMonitor() {
 }
 
 ProcessMonitor::~ProcessMonitor() {
+  std::cout << commRank << ": ~ProcessMonitor()" << std::endl;
 }
 
 ProcessMonitor* ProcessMonitor::pInstance;
@@ -19,11 +20,13 @@ ProcessMonitor* ProcessMonitor::pInstance;
 //Singleton Design Pattern
 ProcessMonitor& ProcessMonitor::instance() {
   static std::mutex guard_;
+
   if (!pInstance) {
     std::lock_guard<std::mutex> lock(guard_);
       if (!pInstance) {
-      pInstance = new ProcessMonitor();
-      pInstance->run();
+        ProcessMonitor* inst = new ProcessMonitor();
+        inst->run();
+        pInstance = inst;
     }
   }
 
@@ -40,15 +43,15 @@ int ProcessMonitor::getCommRank() {
 
 void ProcessMonitor::run() {
   monitorThread = std::thread([this]() -> void {
-    while(!this->shouldFinish)
-      this->pInstance->receive();
-  });
-}
+    int flag;
+    MPI_Status status;
 
-void ProcessMonitor::finish() {
-  this->shouldFinish = true;
-  monitorThread.join();
-  delete pInstance;
+    while(!this->shouldFinish) {
+      MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+      if (flag)
+        this->pInstance->receive();
+    }
+  });
 }
 
 void ProcessMonitor::addMutex(DistributedMutex& mutex) {
@@ -68,6 +71,17 @@ void ProcessMonitor::removeMutex(DistributedMutex& mutex) {
   std::lock_guard<std::mutex> lock(guard);
 
   resToMutex.erase(mutex.getResourceId());
+
+  //if there are no more mutexes to watch, destroy ProcessMonitor
+  if (resToMutex.size() == 0)
+    finish();
+}
+
+void ProcessMonitor::finish() {
+  std::cout << commRank << ": finish()" << std::endl;
+  this->shouldFinish = true;
+  monitorThread.join();
+  delete pInstance;
 }
 
 void ProcessMonitor::broadcast(Packet &packet) {
@@ -85,21 +99,11 @@ void ProcessMonitor::send(int destination, Packet &packet) {
 void ProcessMonitor::receive() {
   MPI_Status status;
   Packet packet;
-  // std::cout << "beforeMPIRecv" << std::endl;
   MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-  // std::cout << commRank << ": received packet from: " << status.MPI_SOURCE
-  //   << ", with clock: " << packet.getClock() << std::endl;
-  //TODO
-  //niekoniecznie notify
-  //notify wtedy, jesli jest to REPLY -> osobna metoda onReply() w mutexie
-  //jeśli REQUEST, to odpowiadamy REPLY bądź wstrzymujemy -> osobna metoda onRequest
-  //jeśli ani to, ani to (czyli komunikat użytkownika) to przekazujemy jak?
-  //resToMutex[packet.getResourceId()].notify();
-  // std::cout << "beforeIter: " << packet.getResourceId() << ", " << resToMutex.size() << std::endl;
+
   std::unordered_map<unsigned int, DistributedMutex&>::iterator mutexIter = resToMutex.find(packet.getResourceId());
   if (mutexIter == resToMutex.end())
     std::cout << "not found" << std::endl;
-  // std::cout << "afterIter: " << mutexIter->first << "->" << std::endl;
   switch(packet.getType()) {
     case Packet::Type::DM_REPLY: {
       mutexIter->second.onReply(status.MPI_SOURCE);
@@ -110,7 +114,4 @@ void ProcessMonitor::receive() {
       break;
     }
   }
-
-  // std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  // this->shouldRun = false;
 }

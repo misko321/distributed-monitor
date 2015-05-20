@@ -16,9 +16,6 @@ public:
 
   void send(int destination, Packet &packet);
   void broadcast(Packet &packet);
-  void receive();
-  void run();
-  void finish();
   void addMutex(DistributedMutex& mutex);
   void removeMutex(DistributedMutex& mutex);
   static ProcessMonitor& instance();
@@ -26,7 +23,11 @@ public:
   int getCommRank();
 
 private:
-  static ProcessMonitor* pInstance; // TODO: volatile
+  void receive();
+  void run();
+  void finish();
+  
+  static ProcessMonitor* pInstance;
   std::thread monitorThread;
   int commSize;
   int commRank;

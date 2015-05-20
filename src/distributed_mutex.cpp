@@ -10,7 +10,6 @@
 
 
 DistributedMutex::DistributedMutex(int resourceId) : resourceId(resourceId) {
-  // std::cout << "Creating new mutex" << std::endl;
   int size = ProcessMonitor::instance().getCommSize();
   waitsForReply = new int[ProcessMonitor::instance().getCommSize()];
   for (int i = 0; i < size; ++i)
@@ -20,14 +19,8 @@ DistributedMutex::DistributedMutex(int resourceId) : resourceId(resourceId) {
 }
 
 DistributedMutex::~DistributedMutex() {
-  // std::cout << "Destroying mutex" << std::endl;
   ProcessMonitor::instance().removeMutex(*this);
-  //ProcessMonitor::instance().finish();
 }
-
-// std::condition_variable& DistributedMutex::getWaitCondition() {
-//   return waitCondition;
-// }
 
 void DistributedMutex::onReply(int sourceCommRank) {
   std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
@@ -43,7 +36,7 @@ void DistributedMutex::onRequest(int sourceCommRank, long packetClock) {
     ((packetClock > localClock) ||
     (packetClock == localClock && sourceCommRank > ProcessMonitor::instance().getCommRank()))) {
       waitsForReply[sourceCommRank] = true;
-      std::cout << rank() << ": waiting with reply to: " << sourceCommRank << std::endl;
+      std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
   }
   else {
     Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
@@ -75,7 +68,7 @@ void DistributedMutex::acquire() {
 }
 
 void DistributedMutex::release() {
-  // std::cout << "release" << std::endl;
+  std::cout << "release\n";
   interestedInCriticalSection = false;
   int size = ProcessMonitor::instance().getCommSize();
   Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
