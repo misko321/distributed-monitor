@@ -19,8 +19,8 @@ private:
   long clock;
   Type type;
   unsigned int resourceId;
-  // unsigned int sourceRank;
-  // unsigned int destinationRank;
+  // unsigned int srcRank;
+  // unsigned int destRank;
 };
 
 #endif // DM_INCLUDE_PACKET_H_

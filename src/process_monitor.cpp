@@ -1,6 +1,7 @@
 #include "process_monitor.h"
 
 #include "packet.h"
+#include "distributed_condvar.h"
 
 #include <mutex>
 #include <thread>
@@ -114,30 +115,65 @@ void ProcessMonitor::send(int destination, Packet &packet) {
   MPI_Send(&packet, sizeof(packet), MPI_BYTE, destination, packet.getType(), MPI_COMM_WORLD);
 }
 
+//TODO improve structure, method for each packet type
 void ProcessMonitor::receive() {
   MPI_Status status;
   Packet packet;
   MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 
-  std::unordered_map<unsigned int, DistributedMutex&>::iterator mutexIter = resToMutex.find(packet.getResourceId());
+  switch (packet.getType()) {
+    case Packet::Type::DM_REQUEST:
+    case Packet::Type::DM_REPLY: {
+      receiveMutexPacket(packet, status.MPI_SOURCE);
+      break;
+    }
+    case Packet::Type::DM_CONDVAR_WAIT:
+    case Packet::Type::DM_CONDVAR_NOTIFY: {
+      receiveCondvarPacket(packet, status.MPI_SOURCE);
+      break;
+    }
+    default: {
+      std::cout << "    !UNSUPPORTED PACKET TYPE" << std::endl;
+    }
+  }
+}
+
+void ProcessMonitor::receiveMutexPacket(Packet& packet, int fromRank) {
+  auto mutexIter = resToMutex.find(packet.getResourceId());
   //if this monitor doesn't care about specific resourceId, immidiately send DM_REPLY
   if (mutexIter == resToMutex.end()) {
     Packet packet = Packet(-1, Packet::Type::DM_REPLY, packet.getResourceId());
-    send(status.MPI_SOURCE, packet);
+    send(fromRank, packet);
   }
   else {
     switch(packet.getType()) {
       case Packet::Type::DM_REPLY: {
-        mutexIter->second.onReply(status.MPI_SOURCE);
+        mutexIter->second.onReply(fromRank);
         break;
       }
       case Packet::Type::DM_REQUEST: {
-        mutexIter->second.onRequest(status.MPI_SOURCE, packet.getClock());
+        mutexIter->second.onRequest(fromRank, packet.getClock());
         break;
       }
-      default: {
-        std::cout << "    !UNSUPPORTED PACKET TYPE" << std::endl;
-      }
+      default: break;
     }
+  }
+}
+
+void ProcessMonitor::receiveCondvarPacket(Packet& packet, int fromRank) {
+  auto condvarIter = resToCondvar.find(packet.getResourceId());
+  if (condvarIter == resToCondvar.end())
+    return;
+
+  switch(packet.getType()) {
+    case Packet::Type::DM_CONDVAR_WAIT: {
+      condvarIter->second.onWait(fromRank);
+      break;
+    }
+    case Packet::Type::DM_CONDVAR_NOTIFY: {
+      condvarIter->second.onNotify();
+      break;
+    }
+    default: break;
   }
 }

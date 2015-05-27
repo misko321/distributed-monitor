@@ -2,13 +2,14 @@
 #define DM_INCLUDE_PROCESS_MONITOR_H_
 
 #include "distributed_mutex.h"
-#include "distributed_condvar.h"
+// #include "distributed_condvar.h"
 
 #include <thread>
 #include <mutex>
 #include <unordered_map>
 
 class Packet;
+class DistributedCondvar;
 
 class ProcessMonitor {
 public:
@@ -29,6 +30,8 @@ public:
 
 private:
   void receive();
+  void receiveMutexPacket(Packet& packet, int fromRank);
+  void receiveCondvarPacket(Packet& packet, int fromRank);
   void run();
   void finish();
 
