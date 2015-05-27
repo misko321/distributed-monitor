@@ -6,10 +6,10 @@ OBJDIR=obj
 
 SRCDIR=src
 
-_DEPS = distributed_mutex.h process_monitor.h packet.h
+_DEPS = distributed_mutex.h process_monitor.h packet.h distributed_cond_var.h
 DEPS = $(patsubst %,$(INCDIR)/%,$(_DEPS))
 
-_OBJ = distributed_mutex.o process_monitor.o packet.o main.o
+_OBJ = distributed_mutex.o process_monitor.o packet.o main.o distributed_cond_var.o
 OBJ = $(patsubst %,$(OBJDIR)/%,$(_OBJ))
 
 

@@ -26,7 +26,7 @@ private:
   void receive();
   void run();
   void finish();
-  
+
   static ProcessMonitor* pInstance;
   std::thread monitorThread;
   int commSize;

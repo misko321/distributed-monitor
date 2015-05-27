@@ -50,6 +50,10 @@ int DistributedMutex::rank() {
   return ProcessMonitor::instance().getCommRank();
 }
 
+long DistributedMutex::getLocalClock() {
+  return localClock;
+}
+
 void DistributedMutex::acquire() {
   //mutex waits on thread_condition, process monitor notifies (notify/notify_all?) mutex
   //corresponding to resource that is, this mutex

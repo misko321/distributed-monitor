@@ -120,6 +120,9 @@ void ProcessMonitor::receive() {
         mutexIter->second.onRequest(status.MPI_SOURCE, packet.getClock());
         break;
       }
+      default: {
+        std::cout << "    !UNSUPPORTED PACKET TYPE" << std::endl;
+      }
     }
   }
 }

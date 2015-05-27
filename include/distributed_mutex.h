@@ -10,13 +10,11 @@ public:
   DistributedMutex(int resourceId);
   ~DistributedMutex();
 
-
   void acquire();
   void release();
 
   unsigned int getResourceId();
-  // std::condition_variable& getWaitCondition();
-  // void notify();
+  long getLocalClock();
   void onReply(int sourceCommRank);
   void onRequest(int sourceCommRank, long packetClock);
 
