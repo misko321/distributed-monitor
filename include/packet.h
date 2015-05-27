@@ -5,7 +5,7 @@
 
 class Packet {
 public:
-  enum Type { DM_REQUEST, DM_REPLY, DM_CONDVAR_WAIT };
+  enum Type { DM_REQUEST, DM_REPLY, DM_CONDVAR_WAIT, DM_CONDVAR_NOTIFY };
   Packet();
   Packet(long clock, Packet::Type type, int resourceId);
   ~Packet();

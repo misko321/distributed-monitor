@@ -54,27 +54,6 @@ void ProcessMonitor::run() {
   });
 }
 
-void ProcessMonitor::removeMutex(DistributedMutex& mutex) {
-  //synchronization in case, the end-user uses multiple threads that add mutexes
-  std::lock_guard<std::mutex> lock(guard);
-
-  resToMutex.erase(mutex.getResourceId());
-
-  /* If there are no more mutexes to watch, destroy ProcessMonitor
-  WARNING: this feature allows for destroying the process monitor and deallocate used resources,
-  but since the monitor will not exist anymore, other processes may block on waiting for messages
-  from it. Uncomment if You know what You're doin'. */
-  //if (resToMutex.size() == 0)
-  //  finish();
-}
-
-void ProcessMonitor::finish() {
-  std::cout << commRank << ": finish()" << std::endl;
-  this->shouldFinish = true;
-  monitorThread.join();
-  delete pInstance;
-}
-
 void ProcessMonitor::addMutex(DistributedMutex& mutex) {
   //synchronization in case, the end-user uses multiple threads that add mutexes
   std::lock_guard<std::mutex> lock(guard);
@@ -85,6 +64,42 @@ void ProcessMonitor::addMutex(DistributedMutex& mutex) {
     std::pair<unsigned int, DistributedMutex&> pair(mutex.getResourceId(), mutex);
     resToMutex.insert(pair);
   }
+}
+
+void ProcessMonitor::removeMutex(DistributedMutex& mutex) {
+  //synchronization in case, the end-user uses multiple threads that add mutexes
+  std::lock_guard<std::mutex> lock(guard);
+
+  resToMutex.erase(mutex.getResourceId());
+
+  /* If there are no more mutexes to watch, destroy ProcessMonitor
+  WARNING: this feature allows for destroying the process monitor and deallocate used resources,
+  but since the monitor will not exist anymore, other processes may block on waiting for messages
+  from it. Uncomment if you know what you're doin'. */
+  //if (resToMutex.size() == 0)
+  //  finish();
+}
+
+void ProcessMonitor::addCondvar(DistributedCondvar& condvar) {
+  std::lock_guard<std::mutex> lock(guard);
+
+  if (resToCondvar.find(condvar.getCondvarId()) == resToCondvar.end()) {
+    std::pair<unsigned int, DistributedCondvar&> pair(condvar.getCondvarId(), condvar);
+    resToCondvar.insert(pair);
+  }
+}
+
+void ProcessMonitor::removeCondvar(DistributedCondvar& condvar) {
+  std::lock_guard<std::mutex> lock(guard);
+
+  resToMutex.erase(condvar.getCondvarId());
+}
+
+void ProcessMonitor::finish() {
+  std::cout << commRank << ": finish()" << std::endl;
+  this->shouldFinish = true;
+  monitorThread.join();
+  delete pInstance;
 }
 
 void ProcessMonitor::broadcast(Packet &packet) {

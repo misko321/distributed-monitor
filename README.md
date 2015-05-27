@@ -11,7 +11,7 @@ Under the hood it draws on Ricart-Agrawala algorithm (check [original work](http
 
 ### Usage
 
-The only class You need to use is **DistributedMutex**. It allows for easy *acquiring* and *releasing* the mutex:
+The only class you need to use is **DistributedMutex**. It allows for easy *acquiring* and *releasing* the mutex:
 
 Default constructor takes 1 parameter, which is the ID of the resource the mutex should apply to:
 
