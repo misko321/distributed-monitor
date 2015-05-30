@@ -1,7 +1,7 @@
 #ifndef DM_INCLUDE_PROCESS_MONITOR_H_
 #define DM_INCLUDE_PROCESS_MONITOR_H_
 
-#include "distributed_mutex.h"
+// #include "distributed_resource.h"
 // #include "distributed_condvar.h"
 
 #include <thread>
@@ -9,18 +9,23 @@
 #include <unordered_map>
 
 class Packet;
-class DistributedCondvar;
+template<typename R> class DistributedResource;
 
+template<template<typename> typename DistributedResource>
 class ProcessMonitor {
 public:
   ProcessMonitor();
   ~ProcessMonitor();
 
   static ProcessMonitor& instance();
-  void addMutex(DistributedMutex& mutex);
-  void removeMutex(DistributedMutex& mutex);
-  void addCondvar(DistributedCondvar& condvar);
-  void removeCondvar(DistributedCondvar& condvar);
+  // template<typename R>
+  void addResource(DistributedResource<R>& resource) {
+
+  }
+  // template<typename R>
+  void removeResource(DistributedResource<R>& resource) {
+
+  }
 
   void send(int destination, Packet &packet);
   void broadcast(Packet &packet);
@@ -40,8 +45,7 @@ private:
   int commSize;
   int commRank;
   volatile bool shouldFinish = false;
-  std::unordered_map<unsigned int, DistributedMutex&> resToMutex;
-  std::unordered_map<unsigned int, DistributedCondvar&> resToCondvar;
+  std::unordered_map<unsigned int, DistributedResource> idToRes;
   std::mutex guard;
 };
 

@@ -1,14 +1,16 @@
-#ifndef DM_INCLUDE_DISTRIBUTED_COND_VAR_H_
-#define DM_INCLUDE_DISTRIBUTED_COND_VAR_H_
+#ifndef DM_INCLUDE_DISTRIBUTED_CONDVAR_H_
+#define DM_INCLUDE_DISTRIBUTED_CONDVAR_H_
 
 #include <deque>
 
 #include "distributed_mutex.h"
 #include "process_monitor.h"
 
+
 class DistributedCondvar {
+  friend class ProcessMonitor;
 public:
-  DistributedCondvar(int condvarId);
+  DistributedCondvar();
   ~DistributedCondvar();
 
   template<typename Predicate>
@@ -28,7 +30,7 @@ public:
       distributedMutex->acquire();
     }
   }
-  void notifyOne();
+  void notify();
   void onNotify();
   void onWait(int fromRank);
 
@@ -42,4 +44,4 @@ private:
   std::deque<int> waitersQueue;
 };
 
-#endif //DM_INCLUDE_DISTRIBUTED_COND_VAR_H_
+#endif //DM_INCLUDE_DISTRIBUTED_CONDVAR_H_

@@ -1,14 +1,11 @@
 #include <iostream>
 
 #include "distributed_condvar.h"
-#include "process_monitor.h"
 
-DistributedCondvar::DistributedCondvar(int condvarId) : condvarId(condvarId) {
-  ProcessMonitor::instance().addCondvar(*this);
+DistributedCondvar::DistributedCondvar() {
 }
 
 DistributedCondvar::~DistributedCondvar() {
-  ProcessMonitor::instance().removeCondvar(*this);
 }
 
 /* This method assumes, that [mutex] has already been acquired. */
@@ -30,7 +27,7 @@ DistributedCondvar::~DistributedCondvar() {
 //   }
 // }
 
-void DistributedCondvar::notifyOne() {
+void DistributedCondvar::notify() {
   std::lock_guard<std::mutex> lock(guard); //TODO check if guards needed here and in other lines
 
   waitersQueue.pop_front();

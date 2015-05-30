@@ -8,18 +8,14 @@
 
 #define MAX(a, b) a > b ? a : b
 
-
-DistributedMutex::DistributedMutex(int resourceId) : resourceId(resourceId) {
+DistributedMutex::DistributedMutex() {
   int size = ProcessMonitor::instance().getCommSize();
   waitsForReply = new int[ProcessMonitor::instance().getCommSize()];
   for (int i = 0; i < size; ++i)
     waitsForReply[i] = false;
-
-  ProcessMonitor::instance().addMutex(*this);
 }
 
 DistributedMutex::~DistributedMutex() {
-  ProcessMonitor::instance().removeMutex(*this);
 }
 
 void DistributedMutex::onReply(int sourceCommRank) {
@@ -71,6 +67,7 @@ void DistributedMutex::acquire() {
 	});
 }
 
+//TODO mutex, something may arrive while sending replies here
 void DistributedMutex::release() {
   // std::cout << "release\n";
   interestedInCriticalSection = false;

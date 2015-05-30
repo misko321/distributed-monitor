@@ -5,9 +5,12 @@
 
 #include "packet.h"
 
+template<typename R> class ProcessMonitor;
+
 class DistributedMutex {
+  friend class ProcessMonitor;
 public:
-  DistributedMutex(int resourceId);
+  DistributedMutex();
   ~DistributedMutex();
 
   void acquire();

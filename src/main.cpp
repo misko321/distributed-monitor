@@ -33,14 +33,14 @@ int main(int argc, char* argv[]) {
   //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
   //   queueMutex1.release();
   // }
-  // std::cout << rank << ": DONE" << std::endl;
 
-  {
-    DistributedMutex mutex(1);
-    DistributedCondvar condvar(1);
-    if (rank % 2)
-      condvar.wait(mutex, [] () -> bool { return false; });
-  }
+  // {
+  //   DistributedMutex mutex(1);
+  //   DistributedCondvar condvar(1);
+  //   if (rank % 2)
+  //     condvar.wait(mutex, [] () -> bool { return true; });
+  // }
+  // std::cout << rank << ": DONE" << std::endl;
 
   std::this_thread::sleep_for(std::chrono::seconds(1000));
   MPI_Finalize();
