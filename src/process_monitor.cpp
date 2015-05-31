@@ -134,7 +134,11 @@ void ProcessMonitor::receivePacket() {
       break;
     }
     case Packet::Type::DM_CONDVAR_NOTIFY: {
-      resourceIter->second.condvar->onNotify(); //TODO here ->, above .
+      resourceIter->second.condvar->onNotify();
+      break;
+    }
+    case Packet::Type::DM_RECV_CONFIRM: {
+      resourceIter->second.onRecvConfirm();
       break;
     }
     default: {
@@ -153,7 +157,11 @@ void ProcessMonitor::receiveResource(int resourceId) {
     return;
   }
   // std::cout << "a" << std::endl;
+  //TODO move recv&send to DistributedResource?
   MPI_Recv(resourceIter->second.resource, resourceIter->second.size, MPI_BYTE,
      MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+  Packet packet = Packet(0, Packet::Type::DM_RECV_CONFIRM, resourceId);
+  sendPacket(status.MPI_SOURCE, packet);
     //  std::cout << "b" << std::endl;
 }

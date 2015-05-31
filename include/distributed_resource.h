@@ -5,6 +5,7 @@
 #include "distributed_condvar.h"
 
 #include <string>
+#include <condition_variable>
 
 class DistributedResource {
   friend class ProcessMonitor;
@@ -25,6 +26,7 @@ public:
   }
 
   void notify();
+  void onRecvConfirm();
 
   unsigned int getId();
 private:
@@ -33,6 +35,8 @@ private:
   DistributedCondvar* condvar = NULL;
   void* resource;
   int size;
+  std::condition_variable waitForConfirm;
+  int repliesNeeded;
 
   void sync();
 };
