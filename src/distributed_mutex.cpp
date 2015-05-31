@@ -8,7 +8,7 @@
 
 #define MAX(a, b) a > b ? a : b
 
-DistributedMutex::DistributedMutex() {
+DistributedMutex::DistributedMutex(unsigned int id) : id(id) {
   int size = ProcessMonitor::instance().getCommSize();
   waitsForReply = new int[ProcessMonitor::instance().getCommSize()];
   for (int i = 0; i < size; ++i)
@@ -35,7 +35,7 @@ void DistributedMutex::onRequest(int sourceCommRank, long packetClock) {
       std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
   }
   else {
-    Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
+    Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
     ProcessMonitor::instance().send(sourceCommRank, packet);
     std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << std::endl;
   }
@@ -55,7 +55,7 @@ void DistributedMutex::acquire() {
   //corresponding to resource that is, this mutex
   interestedInCriticalSection = true;
   localClock = highestClock + 1;
-  Packet packet = Packet(localClock, Packet::Type::DM_REQUEST, resourceId);
+  Packet packet = Packet(localClock, Packet::Type::DM_REQUEST, id);
   repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
 
   ProcessMonitor::instance().broadcast(packet);
@@ -72,7 +72,7 @@ void DistributedMutex::release() {
   // std::cout << "release\n";
   interestedInCriticalSection = false;
   int size = ProcessMonitor::instance().getCommSize();
-  Packet packet = Packet(localClock, Packet::Type::DM_REPLY, resourceId);
+  Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
   for (int i = 0; i < size; ++i) {
     if (waitsForReply[i]) {
       ProcessMonitor::instance().send(i, packet);
@@ -80,8 +80,4 @@ void DistributedMutex::release() {
       std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
     }
   }
-}
-
-unsigned int DistributedMutex::getResourceId() {
-  return resourceId;
 }

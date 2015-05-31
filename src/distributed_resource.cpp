@@ -1,22 +1,27 @@
 #include "distributed_resource.h"
 #include "process_monitor.h"
 
-template<typename R> DistributedResource<R>::DistributedResource(unsigned int id, R& resource) :
-                                                                id(id),
-                                                                resource(resource) {
+DistributedResource::DistributedResource(unsigned int id, void* resource, int size) :
+                                                id(id), resource(resource), size(size) {
+  mutex = new DistributedMutex(id);
 }
 
-template<typename R> unsigned int DistributedResource<R>::getId() {
+unsigned int DistributedResource::getId() {
   return id;
 }
 
-template<typename R> void lock() {
-  mutex.acquire();
-}
-template<typename R> void unlock() {
-  mutex.release();
+void DistributedResource::lock() {
+  mutex->acquire();
 }
 
-template<typename R> void notify() {
-  condvar.notify();
+void DistributedResource::unlock() {
+  mutex->release();
+}
+
+void DistributedResource::notify() {
+  condvar->notify();
+}
+
+void DistributedResource::sync() {
+  ProcessMonitor::instance().sendResource(resource, size);
 }

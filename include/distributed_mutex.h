@@ -5,12 +5,12 @@
 
 #include "packet.h"
 
-template<typename R> class ProcessMonitor;
+class ProcessMonitor;
 
 class DistributedMutex {
-  friend class ProcessMonitor;
+  // friend class ProcessMonitor;
 public:
-  DistributedMutex();
+  DistributedMutex(unsigned int id);
   ~DistributedMutex();
 
   void acquire();
@@ -22,7 +22,7 @@ public:
   void onRequest(int sourceCommRank, long packetClock);
 
 private:
-  unsigned int resourceId;
+  unsigned int id;
   long localClock = 0;
   long highestClock = 0;
   bool interestedInCriticalSection = false;

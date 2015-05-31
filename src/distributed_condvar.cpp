@@ -2,7 +2,7 @@
 
 #include "distributed_condvar.h"
 
-DistributedCondvar::DistributedCondvar() {
+DistributedCondvar::DistributedCondvar(unsigned int id) : id(id) {
 }
 
 DistributedCondvar::~DistributedCondvar() {
@@ -31,7 +31,7 @@ void DistributedCondvar::notify() {
   std::lock_guard<std::mutex> lock(guard); //TODO check if guards needed here and in other lines
 
   waitersQueue.pop_front();
-  Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_NOTIFY, condvarId);
+  Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_NOTIFY, id);
   //all processes must be informed, so they can update thier waitersQueue
   ProcessMonitor::instance().broadcast(packet);
 
@@ -56,8 +56,4 @@ void DistributedCondvar::onWait(int fromRank) {
 
 int DistributedCondvar::rank() {
   return ProcessMonitor::instance().getCommRank();
-}
-
-int DistributedCondvar::getCondvarId() {
-  return condvarId;
 }

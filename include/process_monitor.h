@@ -9,26 +9,22 @@
 #include <unordered_map>
 
 class Packet;
-template<typename R> class DistributedResource;
+class DistributedResource;
+struct DistributedResource;
 
-template<template<typename> typename DistributedResource>
 class ProcessMonitor {
 public:
   ProcessMonitor();
   ~ProcessMonitor();
 
   static ProcessMonitor& instance();
-  // template<typename R>
-  void addResource(DistributedResource<R>& resource) {
 
-  }
-  // template<typename R>
-  void removeResource(DistributedResource<R>& resource) {
-
-  }
+  void addResource(DistributedResource& resource);
+  void removeResource(DistributedResource& resource);
 
   void send(int destination, Packet &packet);
   void broadcast(Packet &packet);
+  void sendResource(void* resource, int size);
 
   int getCommSize();
   int getCommRank();
@@ -45,7 +41,7 @@ private:
   int commSize;
   int commRank;
   volatile bool shouldFinish = false;
-  std::unordered_map<unsigned int, DistributedResource> idToRes;
+  std::unordered_map<unsigned int, DistributedResource&> idToRes;
   std::mutex guard;
 };
 

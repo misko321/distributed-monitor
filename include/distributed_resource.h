@@ -6,11 +6,14 @@
 
 #include <string>
 
-template<typename R>
 class DistributedResource {
+  friend class ProcessMonitor;
+
 public:
-  DistributedResource(unsigned int id, R& resource);
+  DistributedResource(unsigned int id, void* resource, int size);
   ~DistributedResource();
+
+  void sync();
 
   void lock();
   void unlock();
@@ -18,9 +21,9 @@ public:
   template<typename Predicate>
   void wait(Predicate pred) {
     if (condvar == NULL)
-      condvar = new DistributedCondvar();
+      condvar = new DistributedCondvar(id);
 
-    condvar.wait(mutex, pred);
+    condvar->wait(mutex, pred);
   }
 
   void notify();
@@ -28,9 +31,10 @@ public:
   unsigned int getId();
 private:
   unsigned int id;
-  R& resource;
   DistributedMutex* mutex = NULL;
   DistributedCondvar* condvar = NULL;
+  void* resource;
+  int size;
 };
 
 #endif //DM_INCLUDE_DISTRIBUTED_RESOURCE_H_

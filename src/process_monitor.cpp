@@ -60,13 +60,13 @@ void ProcessMonitor::addResource(DistributedResource& resource) {
   std::lock_guard<std::mutex> lock(guard);
 
   // std::cout << "addMutex" << std::endl;
-  if (idToRes.find(resource.getResourceId()) == idToRes.end()) {
+  if (idToRes.find(resource.getId()) == idToRes.end()) {
     // std::cout << "addMutex inside if" << std::endl;
     idToRes.emplace(resource.getId(), resource);
   }
 }
 
-void ProcessMonitor::removeResource(DistributedMutex& mutex) {
+void ProcessMonitor::removeResource(DistributedResource& resource) {
   //synchronization in case, the end-user uses multiple threads that add mutexes
   std::lock_guard<std::mutex> lock(guard);
 
@@ -99,6 +99,10 @@ void ProcessMonitor::send(int destination, Packet &packet) {
   MPI_Send(&packet, sizeof(packet), MPI_BYTE, destination, packet.getType(), MPI_COMM_WORLD);
 }
 
+void ProcessMonitor::sendResource(void* resource, int size) {
+
+}
+
 //TODO improve structure, method for each packet type
 void ProcessMonitor::receive() {
   MPI_Status status;
@@ -109,18 +113,19 @@ void ProcessMonitor::receive() {
 
   switch (packet.getType()) {
     case Packet::Type::DM_REQUEST: {
-      resourceIter->second.mutex.onRequest(status.MPI_SOURCE, packet.getClock());
+      resourceIter->second.mutex->onRequest(status.MPI_SOURCE, packet.getClock());
       break;
+    }
     case Packet::Type::DM_REPLY: {
-      resourceIter->second.mutex.onReply(status.MPI_SOURCE);
+      resourceIter->second.mutex->onReply(status.MPI_SOURCE);
       break;
     }
     case Packet::Type::DM_CONDVAR_WAIT: {
-      resourceIter->second.condvar.onWait(status.MPI_SOURCE);
+      resourceIter->second.condvar->onWait(status.MPI_SOURCE);
       break;
     }
     case Packet::Type::DM_CONDVAR_NOTIFY: {
-      resourceIter->second.condvar.onNotify(status.MPI_SOURCE);
+      resourceIter->second.condvar->onNotify(); //TODO here ->, above .
       break;
     }
     default: {

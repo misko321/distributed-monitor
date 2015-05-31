@@ -8,9 +8,9 @@
 
 
 class DistributedCondvar {
-  friend class ProcessMonitor;
+  // friend class ProcessMonitor;
 public:
-  DistributedCondvar();
+  DistributedCondvar(unsigned int id);
   ~DistributedCondvar();
 
   template<typename Predicate>
@@ -20,7 +20,7 @@ public:
     this->distributedMutex = &mutex;
     while (!pred()) {
       //right here the process is in a critical section, so broadcast messages will be total ordered
-      Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_WAIT, condvarId);
+      Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_WAIT, id);
       ProcessMonitor::instance().broadcast(packet);
 
       distributedMutex->release();
@@ -35,10 +35,9 @@ public:
   void onWait(int fromRank);
 
   int rank();
-  int getCondvarId();
 private:
+  unsigned int id;
   DistributedMutex* distributedMutex = NULL;
-  int condvarId;
   std::condition_variable condVarLocal;
   std::mutex guard;
   std::deque<int> waitersQueue;
