@@ -19,25 +19,25 @@ DistributedMutex::~DistributedMutex() {
 }
 
 void DistributedMutex::onReply(int sourceCommRank) {
-  std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
+  // std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
   --repliesNeeded;
   if (repliesNeeded == 0)
     waitCondition.notify_one();
 }
 
 void DistributedMutex::onRequest(int sourceCommRank, long packetClock) {
-  std::cout << rank() << ": onRequest from: " << sourceCommRank << std::endl;
+  // std::cout << rank() << ": onRequest from: " << sourceCommRank << std::endl;
   highestClock = MAX(highestClock, packetClock);
   if (interestedInCriticalSection &&
     ((packetClock > localClock) ||
     (packetClock == localClock && sourceCommRank > ProcessMonitor::instance().getCommRank()))) {
       waitsForReply[sourceCommRank] = true;
-      std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
+      // std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
   }
   else {
     Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
-    ProcessMonitor::instance().send(sourceCommRank, packet);
-    std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << std::endl;
+    ProcessMonitor::instance().sendPacket(sourceCommRank, packet);
+    // std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << std::endl;
   }
 
 }
@@ -58,7 +58,7 @@ void DistributedMutex::acquire() {
   Packet packet = Packet(localClock, Packet::Type::DM_REQUEST, id);
   repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
 
-  ProcessMonitor::instance().broadcast(packet);
+  ProcessMonitor::instance().broadcastPacket(packet);
 
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
@@ -75,9 +75,9 @@ void DistributedMutex::release() {
   Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
   for (int i = 0; i < size; ++i) {
     if (waitsForReply[i]) {
-      ProcessMonitor::instance().send(i, packet);
+      ProcessMonitor::instance().sendPacket(i, packet);
       waitsForReply[i] = false;
-      std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
+      // std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
     }
   }
 }

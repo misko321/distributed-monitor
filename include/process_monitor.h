@@ -22,17 +22,16 @@ public:
   void addResource(DistributedResource& resource);
   void removeResource(DistributedResource& resource);
 
-  void send(int destination, Packet &packet);
-  void broadcast(Packet &packet);
-  void sendResource(void* resource, int size);
+  void sendPacket(int destination, Packet &packet);
+  void broadcastPacket(Packet &packet);
+  void broadcastResource(int id, void* resource, int size);
 
   int getCommSize();
   int getCommRank();
 
 private:
-  void receive();
-  void receiveMutexPacket(Packet& packet, int fromRank);
-  void receiveCondvarPacket(Packet& packet, int fromRank);
+  void receivePacket();
+  void receiveResource(int resourceId);
   void run();
   void finish();
 

@@ -21,7 +21,7 @@ public:
     while (!pred()) {
       //right here the process is in a critical section, so broadcast messages will be total ordered
       Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_WAIT, id);
-      ProcessMonitor::instance().broadcast(packet);
+      ProcessMonitor::instance().broadcastPacket(packet);
 
       distributedMutex->release();
       std::unique_lock<std::mutex> lock(mutexLocal); //TODO switch to mutex instead of condition variable?

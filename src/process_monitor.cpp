@@ -7,6 +7,8 @@
 #include <thread>
 #include <mpi.h>
 
+#define PACKET_TAG 0
+
 ProcessMonitor* ProcessMonitor::pInstance;
 
 ProcessMonitor::ProcessMonitor() {
@@ -42,19 +44,6 @@ ProcessMonitor& ProcessMonitor::instance() {
   return *pInstance;
 }
 
-void ProcessMonitor::run() {
-  monitorThread = std::thread([this]() -> void {
-    int flag;
-    MPI_Status status;
-
-    while(!this->shouldFinish) {
-      MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-      if (flag)
-        this->pInstance->receive();
-    }
-  });
-}
-
 void ProcessMonitor::addResource(DistributedResource& resource) {
   //synchronization in case, the end-user uses multiple threads that add mutexes
   std::lock_guard<std::mutex> lock(guard);
@@ -87,29 +76,49 @@ void ProcessMonitor::finish() {
   delete pInstance;
 }
 
-void ProcessMonitor::broadcast(Packet &packet) {
+void ProcessMonitor::broadcastPacket(Packet &packet) {
   for (int i = 0; i < commSize; ++i) {
-      if (i != commRank) {
-          MPI_Send(&packet, sizeof(packet), MPI_BYTE, i, packet.getType(), MPI_COMM_WORLD);
-      }
+      if (i != commRank)
+        MPI_Send(&packet, sizeof(packet), MPI_BYTE, i, PACKET_TAG, MPI_COMM_WORLD);
   }
 }
 
-void ProcessMonitor::send(int destination, Packet &packet) {
-  MPI_Send(&packet, sizeof(packet), MPI_BYTE, destination, packet.getType(), MPI_COMM_WORLD);
+void ProcessMonitor::sendPacket(int destination, Packet &packet) {
+  MPI_Send(&packet, sizeof(packet), MPI_BYTE, destination, PACKET_TAG, MPI_COMM_WORLD);
 }
 
-void ProcessMonitor::sendResource(void* resource, int size) {
-
+void ProcessMonitor::broadcastResource(int id, void* resource, int size) {
+  // std::cout << commRank << ": " << id << " " << size << std::endl;
+  for (int i = 0; i < commSize; ++i) {
+    if (i != commRank)
+      MPI_Send(resource, size, MPI_BYTE, i, id, MPI_COMM_WORLD);
+  }
 }
 
-//TODO improve structure, method for each packet type
-void ProcessMonitor::receive() {
+void ProcessMonitor::run() {
+  monitorThread = std::thread([this]() -> void {
+    int flag;
+    MPI_Status status;
+
+    while(!this->shouldFinish) {
+      MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
+      if (flag) {
+        if (status.MPI_TAG == PACKET_TAG)
+          this->pInstance->receivePacket();
+        else
+          this->pInstance->receiveResource(status.MPI_TAG);
+      }
+    }
+  });
+}
+
+void ProcessMonitor::receivePacket() {
+  // std::cout << commRank << ": receivePacket" << std::endl;
   MPI_Status status;
   Packet packet;
   MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-
   auto resourceIter = idToRes.find(packet.getResourceId());
+  //TODO send immidiate reply if no resource found
 
   switch (packet.getType()) {
     case Packet::Type::DM_REQUEST: {
@@ -132,4 +141,19 @@ void ProcessMonitor::receive() {
       std::cout << "    !UNSUPPORTED PACKET TYPE" << std::endl;
     }
   }
+}
+
+void ProcessMonitor::receiveResource(int resourceId) {
+  // std::cout << commRank << ": receiveResource" << std::endl;
+  MPI_Status status;
+
+  auto resourceIter = idToRes.find(resourceId);
+  if (resourceIter == idToRes.end()) {
+    // std::cout << "ret" << std::endl;
+    return;
+  }
+  // std::cout << "a" << std::endl;
+  MPI_Recv(resourceIter->second.resource, resourceIter->second.size, MPI_BYTE,
+     MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+    //  std::cout << "b" << std::endl;
 }

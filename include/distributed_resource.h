@@ -10,10 +10,8 @@ class DistributedResource {
   friend class ProcessMonitor;
 
 public:
-  DistributedResource(unsigned int id, void* resource, int size);
+  DistributedResource(unsigned int id, void* resource, size_t size);
   ~DistributedResource();
-
-  void sync();
 
   void lock();
   void unlock();
@@ -35,6 +33,8 @@ private:
   DistributedCondvar* condvar = NULL;
   void* resource;
   int size;
+
+  void sync();
 };
 
 #endif //DM_INCLUDE_DISTRIBUTED_RESOURCE_H_

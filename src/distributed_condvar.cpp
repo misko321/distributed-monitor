@@ -33,7 +33,7 @@ void DistributedCondvar::notify() {
   waitersQueue.pop_front();
   Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_NOTIFY, id);
   //all processes must be informed, so they can update thier waitersQueue
-  ProcessMonitor::instance().broadcast(packet);
+  ProcessMonitor::instance().broadcastPacket(packet);
 
   this->distributedMutex = NULL;
 }
