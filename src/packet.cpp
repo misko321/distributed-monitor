@@ -3,7 +3,7 @@
 Packet::Packet() {
 }
 
-Packet::Packet(long clock, Packet::Type type, int resourceId) : clock(clock),
+Packet::Packet(long clock, Packet::Type type, unsigned int resourceId) : clock(clock),
                                                                 type(type),
                                                                 resourceId(resourceId) {
 }

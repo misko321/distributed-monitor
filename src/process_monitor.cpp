@@ -77,17 +77,23 @@ void ProcessMonitor::finish() {
 }
 
 void ProcessMonitor::broadcastPacket(Packet &packet) {
+  std::lock_guard<std::mutex> lock(guard);
   for (int i = 0; i < commSize; ++i) {
-      if (i != commRank)
+      if (i != commRank) {
         MPI_Send(&packet, sizeof(packet), MPI_BYTE, i, PACKET_TAG, MPI_COMM_WORLD);
+        std::cout << "broadcastingPacket from = " << commRank << ", to = "
+            << i << ", id = " << packet.getResourceId() << std::endl;
+      }
   }
 }
 
 void ProcessMonitor::sendPacket(int destination, Packet &packet) {
+  std::lock_guard<std::mutex> lock(guard);
   MPI_Send(&packet, sizeof(packet), MPI_BYTE, destination, PACKET_TAG, MPI_COMM_WORLD);
 }
 
 void ProcessMonitor::broadcastResource(int id, void* resource, int size) {
+  std::lock_guard<std::mutex> lock(guard);
   // std::cout << commRank << ": " << id << " " << size << std::endl;
   for (int i = 0; i < commSize; ++i) {
     if (i != commRank)
@@ -97,27 +103,44 @@ void ProcessMonitor::broadcastResource(int id, void* resource, int size) {
 
 void ProcessMonitor::run() {
   monitorThread = std::thread([this]() -> void {
-    int flag;
-    MPI_Status status;
+
 
     while(!this->shouldFinish) {
-      MPI_Iprobe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &flag, &status);
-      if (flag) {
+      // int flag;
+      MPI_Status status;
+      MPI_Probe(MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+      // if (flag) {
+
+        // std::cout << "flag" << flag << std::endl;
         if (status.MPI_TAG == PACKET_TAG)
           this->pInstance->receivePacket();
-        else
+        else {
+          int count;
+          MPI_Get_count(&status, MPI_BYTE, &count);
+          std::cout << commRank << ": run size = " << count << ", id = " << status.MPI_TAG << std::endl;
           this->pInstance->receiveResource(status.MPI_TAG);
-      }
+          std::cout << commRank << ": run size = " << count << ", id = " << status.MPI_TAG << std::endl;
+        }
+      // }
     }
   });
 }
 
 void ProcessMonitor::receivePacket() {
-  // std::cout << commRank << ": receivePacket" << std::endl;
   MPI_Status status;
   Packet packet;
-  MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+  MPI_Recv(&packet, sizeof(packet), MPI_BYTE, MPI_ANY_SOURCE, PACKET_TAG, MPI_COMM_WORLD, &status);
+  std::cout << commRank << ": receivePacket, type = " << packet.getType()
+      << ", id = " << packet.getResourceId() << ", from = " << status.MPI_SOURCE << ", tag = "
+      << status.MPI_TAG << std::endl;
+
   auto resourceIter = idToRes.find(packet.getResourceId());
+  if(resourceIter == idToRes.end()) {
+    Packet packet2 = Packet(packet.getClock(), Packet::Type::DM_REPLY, packet.getResourceId());
+    sendPacket(status.MPI_SOURCE, packet2);
+    std::cout << commRank << ": !sending immediate reply to: " << status.MPI_SOURCE << ", id = "
+      << packet.getResourceId() << std::endl;
+  }
   //TODO send immidiate reply if no resource found
 
   switch (packet.getType()) {
@@ -142,13 +165,13 @@ void ProcessMonitor::receivePacket() {
       break;
     }
     default: {
-      std::cout << "    !UNSUPPORTED PACKET TYPE" << std::endl;
+      std::cout << "    !UNSUPPORTED PACKET TYPE = " << packet.getType() << std::endl;
     }
   }
 }
 
 void ProcessMonitor::receiveResource(int resourceId) {
-  // std::cout << commRank << ": receiveResource" << std::endl;
+  std::cout << commRank << ": receiveResource" << std::endl;
   MPI_Status status;
 
   auto resourceIter = idToRes.find(resourceId);
@@ -158,10 +181,14 @@ void ProcessMonitor::receiveResource(int resourceId) {
   }
   // std::cout << "a" << std::endl;
   //TODO move recv&send to DistributedResource?
-  MPI_Recv(resourceIter->second.resource, resourceIter->second.size, MPI_BYTE,
-     MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+  std::cout << commRank << ": receiveResource, size = " << resourceIter->second.size <<
+    "resourceId = " << resourceId << std::endl;
+  std::cout << reinterpret_cast<long>(resourceIter->second.resource) << std::endl;
+  // int buf[100];
+  MPI_Recv(resourceIter->second.resource, resourceIter->second.size, MPI_BYTE, MPI_ANY_SOURCE, resourceId, MPI_COMM_WORLD, &status);
+  std::cout << commRank << ": after receiveResource, tag = " << status.MPI_TAG << std::endl;
 
-  Packet packet = Packet(0, Packet::Type::DM_RECV_CONFIRM, resourceId);
-  sendPacket(status.MPI_SOURCE, packet);
+  // Packet packet = Packet(0, Packet::Type::DM_RECV_CONFIRM, resourceId);
+  // sendPacket(status.MPI_SOURCE, packet);
     //  std::cout << "b" << std::endl;
 }

@@ -28,7 +28,8 @@ private:
   bool interestedInCriticalSection = false;
   int repliesNeeded;
   int* waitsForReply;
-  std::condition_variable waitCondition;
+  std::condition_variable waitForReplies;
+  std::mutex guard;
 
   int rank();
 };
