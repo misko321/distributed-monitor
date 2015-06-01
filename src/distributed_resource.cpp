@@ -11,7 +11,8 @@ DistributedResource::DistributedResource(unsigned int id, void* resource, size_t
   this->size = static_cast<int>(size);
   this->mutex = new DistributedMutex(id);
   ProcessMonitor::instance().addResource(*this);
-  std::cout << "Resource with id = " << this->id << " created successfully" << std::endl;
+  std::cout << ProcessMonitor::instance().getCommRank() << ": Resource with id = "
+    << this->id << " created successfully" << std::endl;
 }
 
 DistributedResource::~DistributedResource() {
@@ -36,19 +37,20 @@ void DistributedResource::notify() {
 
 //TODO obtain responses from everybody
 void DistributedResource::sync() {
+  // std::cout << ProcessMonitor::instance().getCommRank() << ": sync" << std::endl;
   ProcessMonitor::instance().broadcastResource(id, resource, size);
 
-  // repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
-  // std::mutex mutex;
-  // std::unique_lock<std::mutex> lock(mutex);
-  // waitForConfirm.wait(lock, [this]()-> bool {
-	// 	return this->repliesNeeded == 0;
-	// });
+  repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
+  std::mutex mutex;
+  std::unique_lock<std::mutex> lock(mutex);
+  waitForConfirm.wait(lock, [this]()-> bool {
+		return this->repliesNeeded == 0;
+	});
 }
 
 void DistributedResource::onRecvConfirm() {
   // std::cout << ProcessMonitor::instance().getCommRank() << ": onRecvConfirm" << std::endl;
-  // --repliesNeeded;
-  // if (repliesNeeded == 0)
-  //   waitForConfirm.notify_one();
+  --repliesNeeded;
+  if (repliesNeeded == 0)
+    waitForConfirm.notify_one();
 }

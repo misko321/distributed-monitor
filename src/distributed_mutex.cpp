@@ -19,7 +19,7 @@ DistributedMutex::~DistributedMutex() {
 }
 
 void DistributedMutex::onReply(int sourceCommRank) {
-  std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
+  // std::cout << rank() << ": onReply from: " << sourceCommRank << std::endl;
   --repliesNeeded;
   if (repliesNeeded == 0)
     waitForReplies.notify_one();
@@ -28,18 +28,18 @@ void DistributedMutex::onReply(int sourceCommRank) {
 void DistributedMutex::onRequest(int sourceCommRank, long packetClock) {
   std::lock_guard<std::mutex> lock(guard);
 
-  std::cout << rank() << ": onRequest from: " << sourceCommRank << std::endl;
+  // std::cout << rank() << ": onRequest from: " << sourceCommRank << std::endl;
   highestClock = MAX(highestClock, packetClock);
   if (interestedInCriticalSection &&
     ((packetClock > localClock) ||
     (packetClock == localClock && sourceCommRank > ProcessMonitor::instance().getCommRank()))) {
       waitsForReply[sourceCommRank] = true;
-      std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
+      // std::cout << rank() << ": deferring reply to: " << sourceCommRank << std::endl;
   }
   else {
     Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
     ProcessMonitor::instance().sendPacket(sourceCommRank, packet);
-    std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << ", id = " << id << std::endl;
+    // std::cout << rank() << ": sending immediate reply to: " << sourceCommRank << ", id = " << id << std::endl;
   }
 
 }
@@ -60,9 +60,9 @@ void DistributedMutex::acquire() {
   Packet packet = Packet(localClock, Packet::Type::DM_REQUEST, id);
   repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
 
-  std::cout << rank() << ": broadcasting request" << std::endl;
+  // std::cout << rank() << ": broadcasting request" << std::endl;
   ProcessMonitor::instance().broadcastPacket(packet);
-  std::cout << rank() << ": after broadcasting request" << std::endl;
+  // std::cout << rank() << ": after broadcasting request" << std::endl;
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
 	waitForReplies.wait(lock, [this]()-> bool {
@@ -81,7 +81,7 @@ void DistributedMutex::release() {
       Packet packet = Packet(localClock, Packet::Type::DM_REPLY, id);
       ProcessMonitor::instance().sendPacket(i, packet);
       waitsForReply[i] = false;
-      std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
+      // std::cout << rank() << ": sending reply after deferring to: " << i << std::endl;
     }
   }
 }

@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   std::cout.rdbuf()->pubsetbuf(0, 0);
 
-  std::cout << "MPI Initialized successfully :: size: " << size << ", rank: " << rank << std::endl;
+  std::cout << rank << ": MPI Initialized successfully :: size: " << size << ", rank: " << rank << std::endl;
 
   //DistributedMutex utilizes C++ RAII concept; if it's used in a block, all allocated resources
   //are released when the block reaches end and variables get out of the scope
@@ -45,9 +45,9 @@ int main(int argc, char* argv[]) {
   // std::cout << rank << ": DONE" << std::endl;
   //TODO remove everything at out of scope
   {
-    int num1[2] = { -500, 32100 };
+    int num1[2] = { -100, 1000 };
     DistributedResource resource1(NUM1, &num1, sizeof(num1));
-    std::cout << rank << ": " << reinterpret_cast<long>(&num1) << std::endl;
+    // std::cout << rank << ": " << reinterpret_cast<long>(&num1) << std::endl;
     // MPI_Barrier(MPI_COMM_WORLD);
     // std::this_thread::sleep_for(std::chrono::milliseconds(500));
     // DistributedResource resource2(NUM2, &num, sizeof(num));
@@ -59,9 +59,9 @@ int main(int argc, char* argv[]) {
         --num1[0];
         num1[1] += 10;
         // if (rank != 0)
-          // std::this_thread::sleep_for(std::chrono::milliseconds(100));
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
         std::cout << rank << ": <--- CRITICAL SECTION :: num1 = " << num1[0] << ", " << num1[1] << std::endl;
-        std::cout << rank << ": " << reinterpret_cast<long>(&num1) << std::endl;
+        // std::cout << rank << ": " << reinterpret_cast<long>(&num1) << std::endl;
         resource1.unlock();
         // break;
         // resource2.lock();
