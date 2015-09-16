@@ -10,6 +10,7 @@ DistributedResource::DistributedResource(unsigned int id, void* resource, size_t
                                                 id(id), resource(resource) {
   this->size = static_cast<int>(size);
   this->mutex = new DistributedMutex(id);
+  this->condvar = new DistributedCondvar(this->mutex, id);
   ProcessMonitor::instance().addResource(*this);
   std::cout << ProcessMonitor::instance().getCommRank() << ": Resource with id = "
     << this->id << " created successfully" << std::endl;

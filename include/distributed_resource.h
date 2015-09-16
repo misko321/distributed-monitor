@@ -6,6 +6,7 @@
 
 #include <string>
 #include <condition_variable>
+#include <iostream>
 
 class DistributedResource {
   friend class ProcessMonitor;
@@ -19,10 +20,10 @@ public:
 
   template<typename Predicate>
   void wait(Predicate pred) {
-    if (condvar == NULL)
-      condvar = new DistributedCondvar(id);
-
-    condvar->wait(mutex, pred);
+    // if (condvar == NULL)
+    //   condvar = new DistributedCondvar(id);
+    // std::cout << ProcessMonitor::instance().getCommRank() << ": condvar created" << std::endl;
+    condvar->wait(pred);
   }
 
   void notify();

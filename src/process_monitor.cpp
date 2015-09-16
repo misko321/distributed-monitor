@@ -158,7 +158,7 @@ void ProcessMonitor::receivePacket() {
       break;
     }
     case Packet::Type::DM_CONDVAR_NOTIFY: {
-      resourceIter->second.condvar->onNotify();
+      resourceIter->second.condvar->onNotify(status.MPI_SOURCE);
       break;
     }
     case Packet::Type::DM_RECV_CONFIRM: {
