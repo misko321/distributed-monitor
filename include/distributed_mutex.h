@@ -8,7 +8,6 @@
 class ProcessMonitor;
 
 class DistributedMutex {
-  // friend class ProcessMonitor;
 public:
   DistributedMutex(unsigned int id);
   ~DistributedMutex();

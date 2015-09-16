@@ -20,15 +20,11 @@ public:
 
   template<typename Predicate>
   void wait(Predicate pred) {
-    // if (condvar == NULL)
-    //   condvar = new DistributedCondvar(id);
-    // std::cout << ProcessMonitor::instance().getCommRank() << ": condvar created" << std::endl;
     condvar->wait(pred);
   }
 
   void notify();
   void onRecvConfirm();
-
   unsigned int getId();
 private:
   unsigned int id;

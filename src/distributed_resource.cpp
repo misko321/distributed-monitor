@@ -5,7 +5,6 @@
 #include <iostream>
 #include <mutex>
 
-//TODO fair parameter
 DistributedResource::DistributedResource(unsigned int id, void* resource, size_t size) :
                                                 id(id), resource(resource) {
   this->size = static_cast<int>(size);
@@ -28,7 +27,7 @@ void DistributedResource::lock() {
 }
 
 void DistributedResource::unlock() {
-  sync(); //TODO what if due to unfulfilled condition, resource remains unchanged?
+  sync();
   mutex->release();
 }
 
@@ -36,9 +35,7 @@ void DistributedResource::notify() {
   condvar->notify();
 }
 
-//TODO obtain responses from everybody
 void DistributedResource::sync() {
-  // std::cout << ProcessMonitor::instance().getCommRank() << ": sync" << std::endl;
   ProcessMonitor::instance().broadcastResource(id, resource, size);
 
   repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
@@ -50,7 +47,6 @@ void DistributedResource::sync() {
 }
 
 void DistributedResource::onRecvConfirm() {
-  // std::cout << ProcessMonitor::instance().getCommRank() << ": onRecvConfirm" << std::endl;
   --repliesNeeded;
   if (repliesNeeded == 0)
     waitForConfirm.notify_one();

@@ -20,51 +20,18 @@ int main(int argc, char* argv[]) {
 
   std::cout << "MPI Initialized successfully :: size: " << size << ", rank: " << rank << std::endl;
 
-  //DistributedMutex utilizes C++ RAII concept; if it's used in a block, all allocated resources
-  //are released when the block reaches end and variables get out of the scope
-  // {
-  //   DistributedMutex queueMutex1(1);
-  //   DistributedMutex queueMutex2(2);
-  //
-  //   queueMutex1.acquire();
-  //   std::cout << rank << ": CRITICAL SECTION 1" << std::endl;
-  //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  //   queueMutex1.release();
-  //   queueMutex1.acquire();
-  //   std::cout << rank << ": CRITICAL SECTION 2" << std::endl;
-  //   std::this_thread::sleep_for(std::chrono::milliseconds(500));
-  //   queueMutex1.release();
-  // }
-
-  // {
-  //   DistributedMutex mutex(1);
-  //   DistributedCondvar condvar(1);
-  //   if (rank % 2)
-  //     condvar.wait(mutex, [] () -> bool { return true; });
-  // }
-  // std::cout << rank << ": DONE" << std::endl;
-  //TODO remove everything at out of scope
   {
     int num1[2] = { 0, 0 };
     DistributedResource resource1(NUM1, &num1, sizeof(num1));
-    // DistributedResource resource2(NUM2, &num, sizeof(num));
 
-      while (true) {
-        resource1.lock();
-        // std::cout << rank << ": ---> CRITICAL SECTION :: num1 = " << num1 << std::endl;
-        ++num1[0];
-        num1[1] += 10;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        std::cout << rank << ": <--- CRITICAL SECTION :: num1 = " << num1[0] << ", " << num1[1] << std::endl;
-        resource1.unlock();
-
-        // resource2.lock();
-        // // std::cout << rank << ": ---> CRITICAL SECTION :: num2 = " << num2 << std::endl;
-        // num2 += 10;
-        // std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        // std::cout << rank << ": <--- CRITICAL SECTION :: num2 = " << num2 << std::endl;
-        // resource2.unlock();
-      }
+    while (true) {
+      resource1.lock();
+      ++num1[0];
+      num1[1] += 10;
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      std::cout << rank << ": <--- CRITICAL SECTION :: num1 = " << num1[0] << ", " << num1[1] << std::endl;
+      resource1.unlock();
+    }
   }
 
   std::this_thread::sleep_for(std::chrono::seconds(1000));

@@ -14,14 +14,10 @@ public:
   long getClock();
   Type getType();
   unsigned int getResourceId();
-  // unsigned int getSourceRank();
-  // unsigned int getDestinationRank();
 private:
   long clock;
   Type type;
   unsigned int resourceId;
-  // unsigned int srcRank;
-  // unsigned int destRank;
 };
 
 #endif // DM_INCLUDE_PACKET_H_

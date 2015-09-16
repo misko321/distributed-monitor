@@ -9,7 +9,6 @@
 
 
 class DistributedCondvar {
-  // friend class ProcessMonitor;
 public:
   DistributedCondvar(DistributedMutex* mutex, unsigned int id);
   ~DistributedCondvar();
@@ -18,13 +17,11 @@ public:
   void wait(Predicate pred) {
     static std::mutex mutexLocal;
 
-    // std::cout << rank() << ": wait" << std::endl;
     if (pred())
       return;
 
     Packet packet = Packet(distributedMutex->getLocalClock(), Packet::Type::DM_CONDVAR_WAIT, id);
     ProcessMonitor::instance().broadcastPacket(packet);
-    // std::cout << "waitersQueue size = " << waitersQueue.size() << std::endl;
     waitersQueue.push_back(rank());
 
     std::mutex mutex;
@@ -35,14 +32,11 @@ public:
     });
 
     while (!pred()) {
-      // std::cout << rank() << ": waitersQueue size = " << waitersQueue.size() << std::endl;
       distributedMutex->release();
       std::unique_lock<std::mutex> lock(mutexLocal); //TODO switch to mutex instead of condition variable?
       condVarLocal.wait(lock); //TODO spurious wakeup?
-      // std::cout << rank() << ": tutaj2" << std::endl;
       distributedMutex->acquire();
     }
-    // std::cout << rank() << ": out of condvar wait" << std::endl;
   }
   void notify();
   void onNotify(int fromRank);

@@ -1,9 +1,6 @@
 #ifndef DM_INCLUDE_PROCESS_MONITOR_H_
 #define DM_INCLUDE_PROCESS_MONITOR_H_
 
-// #include "distributed_resource.h"
-// #include "distributed_condvar.h"
-
 #include <thread>
 #include <mutex>
 #include <unordered_map>

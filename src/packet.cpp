@@ -22,11 +22,3 @@ Packet::Type Packet::getType() {
 unsigned int Packet::getResourceId() {
   return resourceId;
 }
-
-// unsigned int Packet::getSourceRank() {
-//   return sourceRank;
-// }
-//
-// unsigned int Packet::getDestinationRank() {
-//   return destinationRank;
-// }
