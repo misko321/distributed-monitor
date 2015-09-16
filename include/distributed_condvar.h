@@ -27,11 +27,15 @@ public:
     // std::cout << "waitersQueue size = " << waitersQueue.size() << std::endl;
     waitersQueue.push_back(rank());
 
+    std::mutex mutex;
+    std::unique_lock<std::mutex> lock(mutex);
+    this->repliesNeeded = ProcessMonitor::instance().getCommSize() - 1;
+    waitForConfirm.wait(lock, [this]()-> bool {
+      return this->repliesNeeded == 0;
+    });
+
     while (!pred()) {
-      //TODO right here the process is in a critical section, so broadcast messages will be total ordered?,
-      //the same as in resource?
       // std::cout << rank() << ": waitersQueue size = " << waitersQueue.size() << std::endl;
-      //TODO collect replies
       distributedMutex->release();
       std::unique_lock<std::mutex> lock(mutexLocal); //TODO switch to mutex instead of condition variable?
       condVarLocal.wait(lock); //TODO spurious wakeup?
@@ -43,12 +47,15 @@ public:
   void notify();
   void onNotify(int fromRank);
   void onWait(int fromRank);
+  void onRecvConfirm();
 
   int rank();
 private:
   unsigned int id;
+  int repliesNeeded;
   DistributedMutex* distributedMutex = NULL;
   std::condition_variable condVarLocal;
+  std::condition_variable waitForConfirm;
   std::mutex guard;
   std::deque<int> waitersQueue;
 };

@@ -155,6 +155,8 @@ void ProcessMonitor::receivePacket() {
     }
     case Packet::Type::DM_CONDVAR_WAIT: {
       resourceIter->second.condvar->onWait(status.MPI_SOURCE);
+      Packet newPacket = Packet(CLOCK_NO_MATTER, Packet::Type::DM_CONDVAR_RECV_CONFIRM, packet.getResourceId());
+      sendPacket(status.MPI_SOURCE, newPacket);
       break;
     }
     case Packet::Type::DM_CONDVAR_NOTIFY: {
@@ -163,6 +165,10 @@ void ProcessMonitor::receivePacket() {
     }
     case Packet::Type::DM_RECV_CONFIRM: {
       resourceIter->second.onRecvConfirm();
+      break;
+    }
+    case Packet::Type::DM_CONDVAR_RECV_CONFIRM: {
+      resourceIter->second.condvar->onRecvConfirm();
       break;
     }
     default: {

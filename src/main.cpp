@@ -47,7 +47,7 @@ int main(int argc, char* argv[]) {
         else {
           resource.lock();
           num += 1;
-          std::this_thread::sleep_for(std::chrono::milliseconds(10));
+          std::this_thread::sleep_for(std::chrono::milliseconds(100));
           std::cout << rank << ": <--- CRITICAL SECTION :: num = " << num << std::endl;
           if (num >= 5)
             resource.notify();

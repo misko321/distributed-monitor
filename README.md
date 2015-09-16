@@ -29,6 +29,8 @@ distMutex.release();
 ### Example
 
 An example is given in `src/main.cpp`.
+Example with two resources!!!
+Example output with commentary
 
 ### TODO
 Describe project file structure.

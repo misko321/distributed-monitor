@@ -9,7 +9,6 @@ DistributedCondvar::DistributedCondvar(DistributedMutex* mutex, unsigned int id)
 
 DistributedCondvar::~DistributedCondvar() {
 }
-
 /* This method assumes, that [mutex] has already been acquired. */
 // template<typename Predicate>
 // void DistributedCondvar::wait(DistributedMutex& mutex, Predicate pred) {
@@ -50,7 +49,7 @@ void DistributedCondvar::onNotify(int fromRank) {
   std::lock_guard<std::mutex> lock(guard);
 
   // std::cout << rank() << ": onNotify" << std::endl;
-  int firstWaiter = waitersQueue.front();
+  // int firstWaiter = waitersQueue.front();
   // std::cout << rank() << ": onNotify, front = " << firstWaiter << ", size = " << waitersQueue.size() << ", fromRank = " << fromRank << std::endl;
   // std::cout << rank() << ": onNotify2" << std::endl;
   //if this process is the first on the list, wake it up
@@ -71,4 +70,11 @@ void DistributedCondvar::onWait(int fromRank) {
 
 int DistributedCondvar::rank() {
   return ProcessMonitor::instance().getCommRank();
+}
+
+void DistributedCondvar::onRecvConfirm() {
+// std::cout << ProcessMonitor::instance().getCommRank() << ": onRecvConfirm" << std::endl;
+  --repliesNeeded;
+  if (repliesNeeded == 0)
+    waitForConfirm.notify_one();
 }
