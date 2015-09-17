@@ -1,5 +1,5 @@
 INCDIR=include
-CC=./bin/mpic++
+CC=mpic++
 CFLAGS=-I$(INCDIR) -Wall --std=c++11 -O3
 
 OBJDIR=obj
