@@ -146,4 +146,4 @@ this example on 8 processes along with an explanation:
 All source code is located under **src/** and **include/** directories. `ProcessMonitor` is a class that manages entire interprocess communication. It sends messages that are instances of `Packet` class and dispatches incoming packets to `DistributedResource`. Each `DistributedResource` holds instance of `DistributedMutex` (for `lock()` and `unlock()`) and `DistributedCondvar` for `wait()` and `notify()`.
 
 ## License
-This project is realesed under [MIT License](http://choosealicense.com/licenses/mit/).
+This project is released under [MIT License](http://choosealicense.com/licenses/mit/).
